@@ -64,39 +64,42 @@ class ZipCode {
             return;
         }
 
-        // 4) Decode groups of 5 between guards; print "invalid sequence" if any bad group
-        String inner = code.substring(1, code.length() - 1);
-        int groups = inner.length() / 5;
-
-        StringBuilder digits = new StringBuilder();
+          StringBuilder digits = new StringBuilder();
         boolean badSeq = false;
-        for (int g = 0; g < groups; g++) {
-            String chunk = inner.substring(g * 5, g * 5 + 5);
-            String mapped = mapDigitPattern(chunk);
-            if (mapped == null) {
-                // EXACT phrasing with two spaces before "has"
-                System.out.println(chunk + "  has invalid sequence in the bar code");
-                badSeq = true;
-            } else {
-                digits.append(mapped);
+
+        for (int i = 1; i + 5 <= code.length() - 1; i += 5) {  // stop before last guard
+            String chunk = code.substring(i, i + 5);
+            int digit;
+
+            switch (chunk) {
+                case "11000" -> digit = 0;
+                case "00011" -> digit = 1;
+                case "00101" -> digit = 2;
+                case "00110" -> digit = 3;
+                case "01001" -> digit = 4;
+                case "01010" -> digit = 5;
+                case "01100" -> digit = 6;
+                case "10001" -> digit = 7;
+                case "10010" -> digit = 8;
+                case "10100" -> digit = 9;
+                default -> {
+                    System.out.println(chunk + " has invalid sequence in the barcode");
+                    badSeq = true;
+                    digit = -1;
+                }
             }
-        }
-        if (badSeq) {
-            return; // leave Zip = 0
+
+            if (digit != -1) digits.append(digit);
         }
 
-        // Use first 5 decoded digits (standard ZIP)
-        String zipStr = digits.toString();
-        if (zipStr.length() >= 5) {
-            this.Zip = Integer.parseInt(zipStr.substring(0, 5));
-        } else {
-            // defensive fallback
-            while (zipStr.length() < 5) zipStr = "0" + zipStr;
+        if (!badSeq) {
+            String zipStr = (digits + "00000").substring(0, 5);
             this.Zip = Integer.parseInt(zipStr);
         }
     }
 
-    // -------- Build barcode from current Zip (simple switch logic kept) --------
+
+    // -------- Build barcode from current Zip --------
     public String GetBarCode() {
         String s = String.format("%05d", this.Zip); // always 5 digits
         StringBuilder sb = new StringBuilder();
@@ -118,25 +121,33 @@ class ZipCode {
         return "1" + sb.toString() + "1";
     }
 
-    // -------- Kept simple: return Zip; decoding is done in the String constructor --------
-    private int parseBarCode() {
-        return this.Zip;
-    }
+    private int parseBarCode(String code) {
+        int zip = 0;
+        for (int i = 1; i + 5 < code.length(); i += 5) {
+            String chunk = code.substring(i, i + 5);
 
-    // -------- Minimal helper for decoding each 5-bit chunk --------
-    private String mapDigitPattern(String chunk) {
-        return switch (chunk) {
-            case "11000" -> "0";
-            case "00011" -> "1";
-            case "00101" -> "2";
-            case "00110" -> "3";
-            case "01001" -> "4";
-            case "01010" -> "5";
-            case "01100" -> "6";
-            case "10001" -> "7";
-            case "10010" -> "8";
-            case "10100" -> "9";
-            default -> null; // triggers "invalid sequence" message
-        };
+            int digit = switch (chunk) {
+                case "11000" -> 0;
+                case "00011" -> 1;
+                case "00101" -> 2;
+                case "00110" -> 3;
+                case "01001" -> 4;
+                case "01010" -> 5;
+                case "01100" -> 6;
+                case "10001" -> 7;
+                case "10010" -> 8;
+                case "10100" -> 9;
+                default -> -1;
+            };
+
+            if (digit == -1) {
+                System.out.println(chunk + "  has invalid sequence in the bar code");
+                return 0; // leave Zip = 0
+            }
+
+            zip = zip * 10 + digit;
+        }
+
+        return zip % 100000; // ensure standard 5-digit ZIP
     }
 }
