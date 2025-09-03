@@ -9,10 +9,10 @@ package ziptestdemo;
  * @author Lenny Manset
  */
 class ZipCode {
-    private String zip = "";    // used to build the barcode
-    public int Zip;             // main class expects this public field
+    private String zip = "";    
+    public int Zip;             
 
-    // -------- INT constructor (keep simple; pad/trim; print error if >5) --------
+    // -------- INT constructor --------
     public ZipCode(int zipcode) {
         String s = String.valueOf(zipcode);
 
@@ -30,15 +30,9 @@ class ZipCode {
         this.Zip = Integer.parseInt(s);
     }
 
-    // -------- STRING constructor (add all the safeguards) --------
+    // -------- STRING constructor --------
     public ZipCode(String code) {
-        this.Zip = 0; // default unless fully valid & decoded
-
-        if (code == null || code.length() < 2) {
-            System.out.println("Error: bar code must be in multiples of 5-binary digits");
-            return;
-        }
-
+        
         // 1) Length check: inner (without guards) must be multiple of 5
         if ((code.length() - 2) % 5 != 0) {
             System.out.println("Error: bar code must be in multiples of 5-binary digits");
